@@ -3,7 +3,7 @@ import axios from "axios";
 import { MissingParamError } from "../common/error.js";
 
 /**
- * Fetch all repos (including private) for the token owner and return
+ * Fetch public repos for the token owner and return
  * top 8 sorted by the given user's all-time commit count.
  *
  * @param {string} username GitHub username.
@@ -16,7 +16,7 @@ const fetchActiveRepos = async (username) => {
   const headers = { Authorization: `token ${token}` };
 
   const reposRes = await axios.get(
-    "https://api.github.com/user/repos?type=all&per_page=100&sort=pushed",
+    "https://api.github.com/user/repos?type=public&per_page=100&sort=pushed",
     { headers },
   );
 
@@ -37,7 +37,7 @@ const fetchActiveRepos = async (username) => {
           results.push({
             name: repo.name,
             commits: contributor.contributions,
-            isPrivate: repo.private,
+            isPrivate: false,
           });
         }
       } catch {

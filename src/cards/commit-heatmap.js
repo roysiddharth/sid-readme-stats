@@ -14,7 +14,12 @@ const PAD_X = 25;
 const GRID_X = PAD_X + LABEL_W;
 const GRID_Y = 18; // below hour labels in body space
 const CARD_W = 450;
-const CARD_H = 170;
+const CARD_H = 185; // extra 15px for date range label at bottom
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const fmt = (date) =>
+  `${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 
 const getOpacity = (val, maxVal) => {
   if (val === 0) return 0.07;
@@ -28,12 +33,12 @@ const getOpacity = (val, maxVal) => {
 /**
  * Render commit heatmap as an SVG card.
  *
- * @param {{ matrix: number[][], total: number }} data
+ * @param {{ matrix: number[][], total: number, from: Date, to: Date }} data
  * @param {object} options
  * @returns {string} SVG string.
  */
 const renderCommitHeatmap = (data, options = {}) => {
-  const { matrix, total } = data;
+  const { matrix, total, from, to } = data;
   const {
     title_color,
     text_color,
@@ -58,6 +63,8 @@ const renderCommitHeatmap = (data, options = {}) => {
   });
 
   const maxVal = Math.max(1, ...matrix.flat());
+  const rangeLabel = `${fmt(from)} – ${fmt(to)}`;
+  const GRID_BOTTOM = GRID_Y + 7 * STEP_Y; // y in body space where grid ends
 
   const hourLabels = HOUR_LABELS.map((h) => {
     const x = GRID_X + h * STEP_X + CELL_W / 2;
@@ -82,6 +89,8 @@ const renderCommitHeatmap = (data, options = {}) => {
     )
     .join("");
 
+  const dateRange = `<text x="${CARD_W - PAD_X}" y="${GRID_BOTTOM + 14}" class="small" text-anchor="end" opacity="0.6">${rangeLabel}</text>`;
+
   const card = new Card({
     width: CARD_W,
     height: CARD_H,
@@ -101,10 +110,10 @@ const renderCommitHeatmap = (data, options = {}) => {
 
   card.setAccessibilityLabel({
     title: "Commit Activity Heatmap",
-    desc: `Heatmap of ${total} recent commits by hour and day of week (UTC)`,
+    desc: `Heatmap of ${total} commits from ${rangeLabel} by hour and day of week (UTC)`,
   });
 
-  return card.render(`${hourLabels}${dayLabels}${cells}`);
+  return card.render(`${hourLabels}${dayLabels}${cells}${dateRange}`);
 };
 
 export { renderCommitHeatmap };

@@ -3,7 +3,7 @@ import axios from "axios";
 import { MissingParamError } from "../common/error.js";
 
 /**
- * Fetch commit timestamps and return a 7x24 activity matrix.
+ * Fetch commit timestamps for the current month and return a 7x24 activity matrix.
  * day: 0=Mon ... 6=Sun, hour: 0-23 UTC
  *
  * @param {string} username GitHub username.
@@ -12,9 +12,14 @@ import { MissingParamError } from "../common/error.js";
 const fetchCommitHeatmap = async (username) => {
   if (!username) throw new MissingParamError(["username"]);
 
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+    .toISOString()
+    .slice(0, 10);
+
   const token = process.env.PAT_1;
   const res = await axios.get(
-    `https://api.github.com/search/commits?q=author:${username}&sort=author-date&order=desc&per_page=100`,
+    `https://api.github.com/search/commits?q=author:${username}+author-date:>=${monthStart}&sort=author-date&order=desc&per_page=100`,
     {
       headers: {
         Authorization: `token ${token}`,
@@ -37,8 +42,8 @@ const fetchCommitHeatmap = async (username) => {
   return {
     matrix,
     total: res.data.items.length,
-    from: dates[dates.length - 1] ?? new Date(),
-    to: dates[0] ?? new Date(),
+    from: dates[dates.length - 1] ?? now,
+    to: dates[0] ?? now,
   };
 };
 
